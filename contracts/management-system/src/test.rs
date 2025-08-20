@@ -124,3 +124,63 @@ fn test_add_employee() {
     let institution_info = mgt_client.get_institution_info();
     assert_eq!(institution_info.total_employees, 1);
 }
+
+#[test]
+fn test_add_employee_invalid_salary() {
+    let (env, admin, employee1, _, token_contract) = setup_test();
+    let contract_id = env.register(EmployeeManagementContract, ());
+    let mgt_client = EmployeeManagementContractClient::new(&env, &contract_id);
+
+    let result = mgt_client.initialize(
+        &admin.clone(),
+        &String::from_str(&env, "QA Institution"),
+        &token_contract.clone(),
+    );
+
+    assert_eq!(result, ());
+
+    // Add employee
+    let result = mgt_client.try_add_employee(
+        &admin,
+        &employee1,
+        &String::from_str(&env, "John Doe"),
+        &0,
+        &EmployeeRank::Junior,
+    );
+
+    assert_eq!(
+        result.unwrap_err(),
+        Ok(ContractError::InvalidSalary),
+        "Error should be InvalidSalary"
+    );
+}
+
+#[test]
+fn test_add_employee_empty_name() {
+    let (env, admin, employee1, _, token_contract) = setup_test();
+    let contract_id = env.register(EmployeeManagementContract, ());
+    let mgt_client = EmployeeManagementContractClient::new(&env, &contract_id);
+
+    let result = mgt_client.initialize(
+        &admin.clone(),
+        &String::from_str(&env, "Quality Assurance Institution"),
+        &token_contract.clone(),
+    );
+
+    assert_eq!(result, ());
+
+    // Add employee
+    let result = mgt_client.try_add_employee(
+        &admin,
+        &employee1,
+        &String::from_str(&env, ""),
+        &1000,
+        &EmployeeRank::Junior,
+    );
+
+    assert_eq!(
+        result.unwrap_err(),
+        Ok(ContractError::InvalidName),
+        "Error should be InvalidName"
+    );
+}
