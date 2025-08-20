@@ -438,3 +438,75 @@ fn test_promote_employee_same_rank() {
     assert_eq!(employee_info.rank, EmployeeRank::Junior);
     assert_eq!(employee_info.salary, 1000);
 }
+
+#[test]
+fn test_suspend_employee() {
+    let (env, admin, employee1, _, token_contract) = setup_test();
+    let contract_id = env.register(EmployeeManagementContract, ());
+    let mgt_client = EmployeeManagementContractClient::new(&env, &contract_id);
+
+    let result = mgt_client.initialize(
+        &admin.clone(),
+        &String::from_str(&env, "QA Institution"),
+        &token_contract.clone(),
+    );
+
+    assert_eq!(result, ());
+
+    // Add first employee
+    mgt_client.add_employee(
+        &admin,
+        &employee1,
+        &String::from_str(&env, "John Doe"),
+        &1000,
+        &EmployeeRank::Junior,
+    );
+
+    let result = mgt_client.suspend_employee(&admin, &employee1);
+
+    assert_eq!(result, ());
+
+    let employee_info = mgt_client.get_employee(&employee1);
+
+    assert_eq!(employee_info.status, EmployeeStatus::Suspended);
+}
+
+#[test]
+fn test_reactivate_employee() {
+    let (env, admin, employee1, _, token_contract) = setup_test();
+    let contract_id = env.register(EmployeeManagementContract, ());
+    let mgt_client = EmployeeManagementContractClient::new(&env, &contract_id);
+
+    let result = mgt_client.initialize(
+        &admin.clone(),
+        &String::from_str(&env, "QA Institution"),
+        &token_contract.clone(),
+    );
+
+    assert_eq!(result, ());
+
+    // Add first employee
+    mgt_client.add_employee(
+        &admin,
+        &employee1,
+        &String::from_str(&env, "John Doe"),
+        &1000,
+        &EmployeeRank::Junior,
+    );
+
+    let result = mgt_client.suspend_employee(&admin, &employee1);
+
+    assert_eq!(result, ());
+
+    let employee_info = mgt_client.get_employee(&employee1);
+
+    assert_eq!(employee_info.status, EmployeeStatus::Suspended);
+
+    let result = mgt_client.reactivate_employee(&admin, &employee1);
+
+    assert_eq!(result, ());
+
+    let employee_info = mgt_client.get_employee(&employee1);
+
+    assert_eq!(employee_info.status, EmployeeStatus::Active);
+}
