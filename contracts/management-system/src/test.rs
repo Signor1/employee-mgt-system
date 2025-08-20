@@ -510,3 +510,78 @@ fn test_reactivate_employee() {
 
     assert_eq!(employee_info.status, EmployeeStatus::Active);
 }
+
+#[test]
+fn test_pay_employee() {
+    let (env, admin, employee1, _, token_contract) = setup_test();
+    let contract_id = env.register(EmployeeManagementContract, ());
+    let mgt_client = EmployeeManagementContractClient::new(&env, &contract_id);
+
+    let result = mgt_client.initialize(
+        &admin.clone(),
+        &String::from_str(&env, "QA Institution"),
+        &token_contract.clone(),
+    );
+
+    assert_eq!(result, ());
+
+    // Add first employee
+    mgt_client.add_employee(
+        &admin,
+        &employee1,
+        &String::from_str(&env, "John Doe"),
+        &1000,
+        &EmployeeRank::Junior,
+    );
+
+    let result = mgt_client.pay_salary(&admin, &employee1);
+
+    assert_eq!(result, ());
+}
+
+#[test]
+fn test_get_all_employee() {
+    let (env, admin, employee1, employee2, token_contract) = setup_test();
+    let contract_id = env.register(EmployeeManagementContract, ());
+    let mgt_client = EmployeeManagementContractClient::new(&env, &contract_id);
+
+    let result = mgt_client.initialize(
+        &admin.clone(),
+        &String::from_str(&env, "QA Institution"),
+        &token_contract.clone(),
+    );
+
+    assert_eq!(result, ());
+
+    // Add first employee
+    mgt_client.add_employee(
+        &admin,
+        &employee1,
+        &String::from_str(&env, "John Doe"),
+        &1000,
+        &EmployeeRank::Junior,
+    );
+
+    // add second employee
+    mgt_client.add_employee(
+        &admin,
+        &employee2,
+        &String::from_str(&env, "Jane Doe"),
+        &2000,
+        &EmployeeRank::Senior,
+    );
+
+    // get all employees
+    let result = mgt_client.get_all_employees();
+
+    assert_eq!(result.len(), 2);
+
+    let emp1 = result.get(0).unwrap();
+    let emp2 = result.get(1).unwrap();
+
+    assert_eq!(emp1.name, String::from_str(&env, "John Doe"));
+    assert_eq!(emp1.wallet_address, employee1);
+
+    assert_eq!(emp2.name, String::from_str(&env, "Jane Doe"));
+    assert_eq!(emp2.wallet_address, employee2);
+}
